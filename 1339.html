@@ -2,9 +2,9 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8" />
-<title>Binary Tree Max Product – 2026 Pro Visualizer</title>
+<title>Binary Tree Max Product – Ultimate Visualizer</title>
 
-<!-- Font -->
+<!-- Manrope -->
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 
 <!-- Tailwind -->
@@ -18,239 +18,177 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <style>
-  body { font-family: 'Manrope', sans-serif; }
-
-  .glass {
-    background: rgba(15,23,42,0.65);
-    backdrop-filter: blur(16px);
-  }
-
-  .node {
-    transition: all .4s ease;
-  }
-
-  .active {
-    box-shadow: 0 0 0 12px rgba(59,130,246,.25);
-    transform: scale(1.15);
-  }
-
-  svg path {
-    stroke-dasharray: 6;
-    animation: flow 1s linear infinite;
-  }
-
-  @keyframes flow {
-    to { stroke-dashoffset: -12; }
-  }
+body { font-family: 'Manrope', sans-serif; background:#f8fafc; }
+.node { transition: all .4s ease; }
+.active { transform: scale(1.25); box-shadow:0 0 0 12px rgba(59,130,246,.25); }
+.bestEdge { stroke:#22c55e; stroke-width:4; }
 </style>
 </head>
 
-<body class="bg-slate-900 text-slate-100">
+<body>
 <div id="root"></div>
 
 <script type="text/babel">
 const { useState, useEffect } = React;
 
-/* ---------- DEFAULT TREE ---------- */
-const defaultTree = {
-  val: 1,
-  left: {
-    val: 2,
-    left: { val: 4 },
-    right: { val: 5 }
-  },
-  right: {
-    val: 3,
-    right: { val: 6 }
-  }
+/* TREE DATA */
+const tree = {
+  id:1,val:1,
+  left:{ id:2,val:2,left:{id:4,val:4},right:{id:5,val:5}},
+  right:{ id:3,val:3,right:{id:6,val:6}}
 };
 
-/* ---------- HELPERS ---------- */
-function clone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-function calcTotal(node) {
-  if (!node) return 0;
-  return node.val + calcTotal(node.left) + calcTotal(node.right);
-}
-
-/* ---------- APP ---------- */
-function App() {
-  const [tree, setTree] = useState(defaultTree);
-  const [active, setActive] = useState(null);
-  const [auto, setAuto] = useState(false);
-  const [steps, setSteps] = useState([]);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [result, setResult] = useState(null);
-  const [jsonInput, setJsonInput] = useState(JSON.stringify(defaultTree, null, 2));
-
-  const totalSum = calcTotal(tree);
-
-  /* ---------- BUILD DFS STEPS ---------- */
-  useEffect(() => {
-    const list = [];
-    function dfs(n) {
-      if (!n) return 0;
-      const left = dfs(n.left);
-      const right = dfs(n.right);
-      const sum = n.val + left + right;
-      list.push({ node: n, sum });
-      return sum;
-    }
-    dfs(tree);
-    setSteps(list);
-    setStepIndex(0);
-    setActive(null);
-  }, [tree]);
-
-  /* ---------- AUTOPLAY ---------- */
-  useEffect(() => {
-    if (!auto) return;
-    if (stepIndex >= steps.length) {
-      setAuto(false);
-      return;
-    }
-    const t = setTimeout(() => {
-      setActive(steps[stepIndex].node);
-      setResult({
-        sum: steps[stepIndex].sum,
-        product: steps[stepIndex].sum * (totalSum - steps[stepIndex].sum)
-      });
-      setStepIndex(i => i + 1);
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [auto, stepIndex, steps]);
-
-  /* ---------- APPLY JSON ---------- */
-  function applyTree() {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      setTree(clone(parsed));
-    } catch {
-      alert("❌ Invalid JSON Tree");
-    }
+/* DFS ANALYSIS */
+function analyze(root){
+  let total=0;
+  const steps=[];
+  function dfs(n){
+    if(!n) return 0;
+    steps.push({type:"enter",id:n.id});
+    const l=dfs(n.left);
+    const r=dfs(n.right);
+    const s=n.val+l+r;
+    steps.push({type:"compute",id:n.id,sum:s});
+    return s;
   }
+  total=dfs(root);
+  steps.forEach(x=>{
+    if(x.sum!=null) x.product=x.sum*(total-x.sum);
+  });
+  return {steps,total};
+}
+
+function App(){
+  const {steps,total}=analyze(tree);
+  const [i,setI]=useState(0);
+  const [play,setPlay]=useState(false);
+  const [speed,setSpeed]=useState(1000);
+  const [active,setActive]=useState(null);
+  const [info,setInfo]=useState("");
+
+  useEffect(()=>{
+    if(!play || i>=steps.length) return;
+    const t=setTimeout(()=>{
+      const s=steps[i];
+      setActive(s.id);
+      if(s.type==="compute"){
+        setInfo(`Subtree=${s.sum}, Other=${total-s.sum}, Product=${s.product}`);
+      }
+      setI(i+1);
+    },speed);
+    return()=>clearTimeout(t);
+  },[play,i,speed]);
 
   return (
     <>
-      {/* NAV */}
-      <nav className="glass fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-full px-8 py-4 flex justify-between shadow-xl z-50">
-        <span className="font-extrabold">🌳 Algorithm Visual Lab</span>
-        <span className="text-sm text-slate-300">DFS • Tree • 2026 UI</span>
-      </nav>
+    {/* NAV */}
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 bg-white shadow rounded-full px-8 py-4 w-[95%] max-w-6xl flex justify-between z-50">
+      <b>Algorithm Visual Lab</b>
+      <span className="text-slate-500">Ultimate 2026 Edition</span>
+    </nav>
 
-      <main className="pt-28 max-w-7xl mx-auto px-4">
+    <main className="pt-28 max-w-6xl mx-auto px-4">
 
-        {/* HERO */}
-        <section className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
-            Maximum Product of Splitted Binary Tree
-          </h1>
-          <p className="text-slate-400 max-w-3xl mx-auto">
-            Auto-play DFS animation, SVG curved edges এবং real-life explanation সহ
+      {/* HERO */}
+      <section className="text-center mb-14">
+        <h1 className="text-4xl font-extrabold mb-3">
+          Maximum Product of Splitted Binary Tree
+        </h1>
+        <p className="text-slate-600">
+          DFS Auto-Play • Animation • Interview Mode
+        </p>
+      </section>
+
+      {/* VISUAL */}
+      <section className="bg-white shadow rounded-3xl p-8 mb-16">
+        <SVGTree active={active}/>
+      </section>
+
+      {/* CONTROLS */}
+      <section className="grid md:grid-cols-3 gap-6 mb-20">
+        <div className="bg-white shadow rounded-xl p-6">
+          <button onClick={()=>setPlay(true)}
+            className="w-full bg-green-500 text-white py-2 rounded mb-2">
+            ▶ Play
+          </button>
+          <button onClick={()=>{setPlay(false);setI(0);setActive(null);}}
+            className="w-full bg-slate-200 py-2 rounded">
+            ⏹ Reset
+          </button>
+          <label className="block mt-4 text-sm">
+            Speed
+            <input type="range" min="300" max="2000"
+              value={speed}
+              onChange={e=>setSpeed(e.target.value)}
+              className="w-full"/>
+          </label>
+        </div>
+
+        <div className="bg-white shadow rounded-xl p-6">
+          <h2 className="font-bold mb-2">🧠 Current Step</h2>
+          <p className="text-green-600 text-sm">
+            {info || "DFS চলছে…"}
           </p>
-        </section>
+        </div>
 
-        {/* VISUAL */}
-        <section className="grid md:grid-cols-3 gap-10">
-          {/* TREE */}
-          <div className="md:col-span-2 bg-slate-800 rounded-2xl p-8 relative">
-            <Tree node={tree} active={active} />
-          </div>
+        <div className="bg-white shadow rounded-xl p-6">
+          <h2 className="font-bold mb-2">📘 How It Works</h2>
+          <ul className="list-disc ml-5 text-slate-600 text-sm space-y-1">
+            <li>DFS দিয়ে subtree sum বের করি</li>
+            <li>একটা edge কাটার সম্ভাবনা ধরি</li>
+            <li>Maximum product রাখি</li>
+          </ul>
+        </div>
+      </section>
 
-          {/* CONTROLS */}
-          <div className="bg-slate-800 rounded-2xl p-6">
-            <h2 className="font-bold text-xl mb-4">🎬 DFS Control</h2>
+      {/* FOOTER */}
+      <footer className="bg-white rounded-t-3xl shadow p-10 text-center text-slate-500">
+        <b className="text-slate-700">
+          Algorithm Visual Learning Platform – 2026
+        </b>
+        <p className="text-sm mt-2">
+          Built for Interview • Teaching • Portfolio
+        </p>
+      </footer>
 
-            <button
-              onClick={() => setAuto(true)}
-              className="w-full bg-green-500 py-2 rounded mb-2"
-            >
-              ▶ Auto Play DFS
-            </button>
-
-            <button
-              onClick={() => {
-                setAuto(false);
-                setStepIndex(0);
-                setActive(null);
-              }}
-              className="w-full bg-slate-700 py-2 rounded"
-            >
-              ⏹ Reset
-            </button>
-
-            {result && (
-              <div className="mt-4 bg-slate-900 p-3 rounded text-sm text-green-400">
-                Subtree = {result.sum}<br/>
-                Other = {totalSum - result.sum}<br/>
-                Product = {result.product}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* INPUT */}
-        <section className="mt-20 grid md:grid-cols-2 gap-10">
-          <div>
-            <h2 className="text-2xl font-bold mb-3">🧩 Dynamic Tree Input</h2>
-            <textarea
-              value={jsonInput}
-              onChange={e => setJsonInput(e.target.value)}
-              className="w-full h-60 bg-slate-800 p-4 rounded text-sm"
-            />
-            <button
-              onClick={applyTree}
-              className="mt-3 bg-blue-500 px-6 py-2 rounded"
-            >
-              Apply Tree
-            </button>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold mb-3">📘 Interview Explanation</h2>
-            <ul className="list-disc ml-5 text-slate-300 space-y-2">
-              <li>DFS দিয়ে subtree sum বের করি</li>
-              <li>প্রতিটা edge কাটার সম্ভাবনা দেখি</li>
-              <li>Maximum product রাখি</li>
-              <li>Time complexity O(N)</li>
-            </ul>
-          </div>
-        </section>
-
-        {/* FOOTER */}
-        <footer className="mt-24 bg-slate-800 rounded-t-3xl p-10 text-center text-slate-400">
-          <p className="font-semibold text-slate-200">
-            🚀 Algorithm Visual Learning Platform – 2026
-          </p>
-          <p className="text-sm mt-2">
-            Tree • DFS • Interview • Education
-          </p>
-        </footer>
-      </main>
+    </main>
     </>
   );
 }
 
-/* ---------- TREE RENDER ---------- */
-function Tree({ node, active }) {
-  if (!node) return null;
+/* SVG TREE */
+function SVGTree({active}){
+  const nodes=[],edges=[];
+  function walk(n,x,y,g){
+    nodes.push({...n,x,y});
+    if(n.left){edges.push([n.id,n.left.id]);walk(n.left,x-g,y+100,g/1.8);}
+    if(n.right){edges.push([n.id,n.right.id]);walk(n.right,x+g,y+100,g/1.8);}
+  }
+  walk(tree,400,60,180);
 
-  const isActive = active === node;
-
-  return (
-    <div className="flex flex-col items-center relative">
-      <div className={`node w-14 h-14 rounded-full flex items-center justify-center
-        ${isActive ? "bg-red-500 active" : "bg-blue-600"}`}>
-        {node.val}
-      </div>
-
-      <div className="flex gap-16 mt-8">
-        <Tree node={node.left} active={active} />
-        <Tree node={node.right} active={active} />
-      </div>
-    </div>
+  return(
+    <svg width="100%" height="400">
+      {edges.map(([f,t])=>{
+        const a=nodes.find(n=>n.id===f);
+        const b=nodes.find(n=>n.id===t);
+        return(
+          <path key={t}
+            d={`M ${a.x} ${a.y+25} C ${a.x} ${a.y+70}, ${b.x} ${b.y-70}, ${b.x} ${b.y}`}
+            fill="none" stroke="#94a3b8"/>
+        );
+      })}
+      {nodes.map(n=>(
+        <g key={n.id}>
+          <circle cx={n.x} cy={n.y} r="22"
+            fill={active===n.id?"#ef4444":"#3b82f6"}
+            className={active===n.id?"active":""}/>
+          <text x={n.x} y={n.y+5} textAnchor="middle"
+            fill="white" fontSize="14" fontWeight="bold">
+            {n.val}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }
 
