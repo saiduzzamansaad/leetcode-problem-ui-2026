@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Square Hole Visualizer</title>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui;
+  background:#ffffff;
+  color:#0f172a;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:40px 20px;
+}
+h1{
+  text-align:center;
+  margin-bottom:10px;
+}
+.subtitle{
+  text-align:center;
+  color:#64748b;
+  margin-bottom:40px;
+}
+
+/* CARD */
+.card{
+  background:#ffffff;
+  border-radius:16px;
+  padding:30px;
+  margin-bottom:30px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* INPUT */
+.inputs{
+  display:flex;
+  gap:15px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+input{
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #cbd5f5;
+  width:240px;
+}
+
+/* BUTTON */
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  margin-top:20px;
+}
+button{
+  padding:12px 20px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+button.secondary{
+  background:#e2e8f0;
+  color:#0f172a;
+}
+
+/* EXPLANATION */
+.explain{
+  margin-top:20px;
+  font-size:15px;
+  padding:15px;
+  background:#f8fafc;
+  border-radius:12px;
+}
+
+/* FLOW */
+.flow{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;
+}
+.flow div{
+  padding:14px;
+  border-radius:10px;
+  background:#f1f5f9;
+  text-align:center;
+  font-size:14px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  justify-content:center;
+  margin-top:30px;
+}
+.cell{
+  width:36px;
+  height:36px;
+  border:1px solid #cbd5e1;
+}
+.active{
+  background:#2563eb;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Maximize Square Hole – Visual Solver</h1>
+<p class="subtitle">LeetCode-style | GSAP animated | Step-by-Step</p>
+
+<!-- PROBLEM -->
+<div class="card">
+<h3>📘 Problem Summary</h3>
+<p>
+We remove consecutive horizontal & vertical bars from a grid.
+Removing <b>k</b> consecutive bars creates a gap of <b>k + 1</b>.
+The largest square hole depends on the <b>minimum gap</b>.
+</p>
+</div>
+
+<!-- INPUT -->
+<div class="card">
+<h3>🎯 Input</h3>
+<div class="inputs">
+  <input id="hBars" value="2,3" placeholder="Horizontal bars">
+  <input id="vBars" value="2" placeholder="Vertical bars">
+</div>
+
+<div class="controls">
+  <button onclick="start()">▶ Play</button>
+  <button class="secondary" onclick="nextStep()">Next Step</button>
+  <button class="secondary" onclick="reset()">Reset</button>
+</div>
+
+<div class="explain" id="explain">Click Play to start visualization</div>
+</div>
+
+<!-- FLOW -->
+<div class="card">
+<h3>🔁 Algorithm Flow</h3>
+<div class="flow">
+  <div>Sort Bars</div>
+  <div>Find Consecutive Bars</div>
+  <div>Convert to Gap</div>
+  <div>Min Gap = Square Side</div>
+  <div>Side × Side = Area</div>
+</div>
+</div>
+
+<!-- GRID -->
+<div class="card">
+<h3>🟦 Square Hole Visualization</h3>
+<div id="grid" class="grid"></div>
+</div>
+
+</div>
+
+<script>
+let steps=[], current=0, side=0;
+
+function maxConsecutive(arr){
+  arr.sort((a,b)=>a-b);
+  let max=1, cur=1;
+  for(let i=1;i<arr.length;i++){
+    if(arr[i]===arr[i-1]+1) cur++;
+    else cur=1;
+    max=Math.max(max,cur);
+  }
+  return max;
+}
+
+function start(){
+  const h=document.getElementById("hBars").value.split(",").map(Number);
+  const v=document.getElementById("vBars").value.split(",").map(Number);
+
+  const hGap=maxConsecutive(h)+1;
+  const vGap=maxConsecutive(v)+1;
+  side=Math.min(hGap,vGap);
+
+  steps=[
+    `Sorted bars and found consecutive sequences`,
+    `Horizontal gap = ${hGap}`,
+    `Vertical gap = ${vGap}`,
+    `Square side = min(${hGap}, ${vGap}) = ${side}`,
+    `Final area = ${side*side}`
+  ];
+
+  resetGrid();
+  current=0;
+  nextStep();
+}
+
+function nextStep(){
+  if(current>=steps.length) return;
+  document.getElementById("explain").innerHTML=steps[current];
+
+  gsap.fromTo(".explain",{opacity:0,y:10},{opacity:1,y:0});
+
+  if(current===3){
+    drawGrid(side);
+  }
+  current++;
+}
+
+function reset(){
+  document.getElementById("explain").innerHTML="Reset complete";
+  document.getElementById("grid").innerHTML="";
+  current=0;
+}
+
+function drawGrid(size){
+  const grid=document.getElementById("grid");
+  grid.innerHTML="";
+  grid.style.gridTemplateColumns=`repeat(${size},36px)`;
+
+  for(let i=0;i<size*size;i++){
+    const c=document.createElement("div");
+    c.className="cell";
+    grid.appendChild(c);
+    gsap.to(c,{background:"#2563eb",delay:i*0.03});
+  }
+}
+
+function resetGrid(){
+  document.getElementById("grid").innerHTML="";
+}
+</script>
+
+</body>
+</html>
