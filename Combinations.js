@@ -3,7 +3,7 @@ var combine = function(n, k) {
       const path = [];
   
       function backtrack(start) {
-          // If we have k numbers, add a copy
+          
           if (path.length === k) {
               result.push([...path]);
               return;
